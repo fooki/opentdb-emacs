@@ -2,4 +2,4 @@
 set -e
 set -x
 
-emacs -batch -l ert -l opentdb-tests.el -f ert-run-tests-batch-and-exit
+emacs -batch -l install-test-packages.el -l ert -l opentdb.el -l opentdb-tests.el -f ert-run-tests-batch-and-exit
