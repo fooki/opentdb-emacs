@@ -1,10 +1,35 @@
 (require 'opentdb)
 (require 'request)
 
+;;;
+;;; All tests uses the mock request defined in mock-request.el
+;;;
 (ert-deftest test-fetch-questions-returns-found-questions ()
   ;; Mockdata returns 2 questions
   (should (= 2 (length (opentdb-fetch-questions)))))
 
+(ert-deftest test-fetch-questions-uses-opentdb-url ()
+  (opentdb-fetch-questions)
+  (should (equal "https://opentdb.com/api.php" request-url)))
+
+(ert-deftest test-fetch-questions-allows-provided-amount-and-category ()
+  (opentdb-fetch-questions :amount 3 :category 5)
+  (should
+   (equal '(("amount" . 3) ("category" . 5) ("encode" . "base64"))
+	  request-params)))
+
+(ert-deftest test-fetch-questions-uses-custom-variable-category ()
+  (setq opentdb-category 666)
+  (opentdb-fetch-questions :amount 3)
+  (should
+   (equal '(("amount" . 3) ("category" . 666) ("encode" . "base64"))
+	  request-params)))
+
+(ert-deftest test-fetch-questions-defaults-to-1-question-in-any-category ()
+  (opentdb-fetch-questions)
+  (should
+   (equal '(("amount" . 1) ("category" . "") ("encode" . "base64"))
+	  request-params)))
 
 (ert-deftest test-fetch-questions-are-set-correctly ()
   (let* ((question (nth 0 (opentdb-fetch-questions)))
@@ -19,7 +44,7 @@
 	 (correct-answer
 	  (base64-encode-string (opentdb-question-correct-answer question))))
 
-    ;; Check mock-request.el for test data
+    ;; Check mock-request.el for base64 encoded test data
     (should (equal "RW50ZXJ0YWlubWVudDogSmFwYW5lc2UgQW5pbWUgJiBNYW5nYQ==" category))
     (should (equal "bXVsdGlwbGU=" type))
     (should (equal "ZWFzeQ==" difficulty))

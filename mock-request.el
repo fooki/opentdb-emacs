@@ -1,6 +1,14 @@
 (provide 'request)
 
-(defun request (&rest args) 'result)
+(defvar request-url nil)
+(defvar request-params nil)
+
+(defun request (url &key params &key sync)
+  (progn
+    (setq request-url url)
+    (setq request-params params)
+    'result))
+
 (defun request-response-data (result)
 "
 {
