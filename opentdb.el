@@ -13,6 +13,11 @@
   :group 'opentdb
   :type 'string)
 
+(defcustom opentdb-difficulty nil
+  "nil for any difficulty, otherwise easy medium or hard"
+  :group 'opentdb
+  :type 'string)
+
 (defconst opentdb-api-url "https://opentdb.com/api.php")
 
 (defconst opentdb-categories
@@ -85,12 +90,15 @@
      collect (opentdb--assoc-question->opentdb-question question))))
 
 
-(cl-defun opentdb-fetch-questions (&key (amount 1) &key (category opentdb-category))
+(cl-defun opentdb-fetch-questions
+    (&key (amount 1) &key (category opentdb-category) &key (difficulty opentdb-difficulty))
   (let* ((nil-safe-category (if (null category) "" category))
+	 (nil-safe-difficulty (downcase (if (null difficulty) "" difficulty)))
 	 (result (request
 		   opentdb-api-url
 		   :params `(("amount" . ,amount)
 			     ("category" . ,nil-safe-category)
+			     ("difficulty" . ,nil-safe-difficulty)
 			     ("encode" . "base64"))
 		   :sync t)))
     (opentdb--json-to-opentdb-questions (request-response-data result))))

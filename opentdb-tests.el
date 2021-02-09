@@ -13,22 +13,32 @@
   (should (equal "https://opentdb.com/api.php" request-url)))
 
 (ert-deftest test-fetch-questions-allows-provided-amount-and-category ()
-  (opentdb-fetch-questions :amount 3 :category 5)
+  (opentdb-fetch-questions :amount 3 :difficulty "easy" :category 5)
   (should
-   (equal '(("amount" . 3) ("category" . 5) ("encode" . "base64"))
+   (equal '(("amount" . 3)
+	    ("category" . 5)
+	    ("difficulty" . "easy")
+	    ("encode" . "base64"))
 	  request-params)))
 
-(ert-deftest test-fetch-questions-uses-custom-variable-category ()
+(ert-deftest test-fetch-questions-uses-custom-variables ()
   (setq opentdb-category 666)
+  (setq opentdb-difficulty "Hard")
   (opentdb-fetch-questions :amount 3)
   (should
-   (equal '(("amount" . 3) ("category" . 666) ("encode" . "base64"))
+   (equal '(("amount" . 3)
+	    ("category" . 666)
+	    ("difficulty" . "hard")
+	    ("encode" . "base64"))
 	  request-params)))
 
-(ert-deftest test-fetch-questions-defaults-to-1-question-in-any-category ()
+(ert-deftest test-fetch-questions-defaults-to-1-question-with-empty-options ()
   (opentdb-fetch-questions)
   (should
-   (equal '(("amount" . 1) ("category" . "") ("encode" . "base64"))
+   (equal '(("amount" . 1)
+	    ("category" . "")
+	    ("difficulty" . "")
+	    ("encode" . "base64"))
 	  request-params)))
 
 (ert-deftest test-fetch-questions-are-set-correctly ()
