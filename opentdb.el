@@ -3,6 +3,10 @@
 (require 'cl-lib)
 (require 'request)
 (require 'json)
+(require 'widget)
+
+(eval-when-compile
+  (require 'wid-edit))
 
 (defgroup opentdb nil
   "Emacs quiz based on the opentdb api"
@@ -23,7 +27,7 @@
   :group 'opentdb
   :type 'string)
 
-(defconst opentdb-api-url "https://opentdb.com/api.php")
+(defconst opentdb-api-url "https://XXXopentdb.com/api.php")
 
 (defconst opentdb-categories
   '(("9" .  "General Knowledge")
@@ -50,6 +54,8 @@
     ("30" . "Science: Gadgets")
     ("31" . "Entertainment: Japanese Anime & Manga")
     ("32" . "Entertainment: Cartoon & Animations")))
+
+(defconst opentdb--correct-answer-shown nil)
 
 (cl-defstruct opentdb-question
   question
@@ -113,3 +119,99 @@
 			     ("encode" . "base64"))
 		   :sync t)))
     (opentdb--json-to-opentdb-questions (request-response-data result))))
+
+(defconst opentdb--answer-letter-index
+  ;; Here we assume that no questions have more than 26 choices. If that is
+  ;; incorrect then I owe you a beer.
+  '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z))
+
+(cl-defun opentdb--prefix-answers (question)
+  ;; Prefixes all answers with a letter to make it easier to refer to
+  ;; them. Example "I think answer B is correct!".
+  (cl-mapcar #'cons
+	     opentdb--answer-letter-index
+	     (opentdb-question-answers question)))
+
+(cl-defun opentdb--prefix-correct-answer (question)
+  ;; Prefixes the correct answer with a letter, giving it the same letter as it
+  ;; has in the list of all answers.
+  (let* ((correct-answer (opentdb-question-correct-answer question))
+	 (answers (opentdb-question-answers question))
+  	 (correct-pos (cl-position correct-answer answers :test 'equal))
+  	 (prefix (nth correct-pos opentdb--answer-letter-index)))
+    (cons prefix correct-answer)))
+
+(cl-defun opentdb--next-question-button ()
+  ;; Inserts a button widget at current point for starting over the quiz.
+  (widget-create
+   'push-button
+   :notify '(lambda (&rest ignore) (opentdb-next-question))
+   "Next question"))
+
+(cl-defun opentdb--prefixed-answer-list (question)
+  ;; Inserts a bunch of widgets at current point containing all the answers for
+  ;; the provided question.
+  (let ((prefixed-answers (opentdb--prefix-answers question)))
+    (cl-map
+     'list
+     (lambda (el)
+       (progn
+	 (widget-insert (format "%s - %s" (car el) (cdr el)))
+	 (widget-insert "\n\n")))
+     prefixed-answers)))
+
+(cl-defun opentdb--question-banner (question)
+  (widget-insert (format "\n\n### %s ###\n\n" (opentdb-question-question question))))
+
+(cl-defun opentdb--margin-widget ()
+  (widget-insert "\n\n"))
+
+(cl-defun opentdb--show-answer-button (question)
+  (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question )))
+    ;; Unclear why this is needed, seems like a javascript this/that.
+    (setq opentdb--prefixed-correct-answer prefixed-correct-answer)
+    (widget-create 'push-button
+		   ;; When pushed, the button will reveal another button for
+		   ;; showing another question.
+		   :notify '(lambda (widget &rest ignore)
+			      ;; Since this button is still shown after pressed,
+			      ;; we should only react on the first button press.
+			      (when (not opentdb--correct-answer-shown)
+				(progn
+				  (widget-value-set
+				   widget
+				   (format "Correct answer: %s - %s"
+					   (car opentdb--prefixed-correct-answer)
+					   (cdr opentdb--prefixed-correct-answer)))
+				  (end-of-buffer)
+				  (widget-insert "\n\n")
+				  (opentdb--next-question-button)
+
+				  ;; A hack to keep track of whether we have
+				  ;; clicked the show answer button already.
+				  (setq opentdb--correct-answer-shown t)
+
+				  (widget-setup))))
+		   :value "Show answer")))
+
+(defun opentdb-next-question ()
+  "Shows a random question in a new buffer"
+  (interactive)
+  (let* ((question (nth 0 (opentdb-fetch-questions))))
+
+    ;; Clean up potential old buffer
+    (kill-buffer (get-buffer-create "*OpenTDB*"))
+    (switch-to-buffer "*OpenTDB*")
+
+    ;; A hack to keep track of whether we have clicked the show answer button
+    ;; already.
+    (setq opentdb--correct-answer-shown nil)
+
+    (opentdb--question-banner question)
+    (opentdb--margin-widget)
+    (opentdb--prefixed-answer-list question)
+    (opentdb--margin-widget)
+    (opentdb--show-answer-button question)
+
+    (use-local-map widget-keymap)
+    (widget-setup)))

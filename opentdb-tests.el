@@ -65,3 +65,23 @@
     (should (equal "ZWFzeQ==" difficulty))
     (should (equal "SW4gdGhlIDl0aCBQb2tlbW9uIG1vdmllLCB3aG8gaXMgdGhlIFByaW5jZSBvZiB0aGUgU2VhPw==" quiz))
     (should (equal "TWFuYXBoeQ==" correct-answer))))
+
+(ert-deftest test-next-question-does-not-crash ()
+  (opentdb-next-question))
+
+
+(ert-deftest test-prefixing-answers-adds-letters-to-the-answers ()
+    (let* ((question (make-opentdb-question
+		     :question "yadayada yada?"
+		     :category "sports"
+		     :type "multiple"
+		     :difficulty "easy"
+		     :correct-answer "beets"
+		     :answers (list "bears" "beets" "Battlestar Galactica")))
+	   (prefixed-answers (opentdb--prefix-answers question))
+	   (prefixed-correct (opentdb--prefix-correct-answer question)))
+      (should (equal '((A . "bears") (B . "beets") (C . "Battlestar Galactica")) prefixed-answers))
+
+      ;; The correct answer is prefixed with B instead of A since its the second
+      ;; answer.
+      (should (equal (cons 'B "beets") prefixed-correct))))
