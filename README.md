@@ -15,7 +15,7 @@ Running the following interactive command will open a new buffer with the quiz:
 
 You can also fetch questions yourself and use them how you wish:
 ```
-;; See opentdb.el for more functions
+;; This function takes a lot of optional params for fetching the right questions. See opentdb.el for more info.
 (opentdb-fetch-questions)
 ```
 
