@@ -27,7 +27,7 @@
   :group 'opentdb
   :type 'string)
 
-(defconst opentdb-api-url "https://XXXopentdb.com/api.php")
+(defconst opentdb-api-url "https://opentdb.com/api.php")
 
 (defconst opentdb-categories
   '(("9" .  "General Knowledge")
