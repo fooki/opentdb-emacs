@@ -1,4 +1,4 @@
-;;; opentdb.el --- A package for using the opentdb api. -*- lexical-binding: t -*-
+;;; opentdb.el --- A package for using the opentdb api -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021 Karl Johansson
 
@@ -57,6 +57,7 @@
 
 (defconst opentdb-api-url "https://opentdb.com/api.php")
 
+;; This const isn't really used and might be outdated at any time.
 (defconst opentdb-categories
   '(("9" .  "General Knowledge")
     ("10" . "Entertainment: Books")
@@ -83,7 +84,9 @@
     ("31" . "Entertainment: Japanese Anime & Manga")
     ("32" . "Entertainment: Cartoon & Animations")))
 
-(defconst opentdb--correct-answer-shown nil)
+(defconst opentdb--correct-answer-shown
+  nil
+  "Helps keep track of state in the quiz GUI.")
 
 (cl-defstruct opentdb-question
   question
@@ -105,8 +108,10 @@
   (cl-map 'list #'identity vec))
 
 (cl-defun opentdb--extract-b64-val (key question)
+  ;; decodes a single base64 field in the provided question
   (base64-decode-string (cdr (cl-assoc key question))))
 
+;; ((string . base64-string) ...) -> opentdb-question)
 (cl-defun opentdb--assoc-question->opentdb-question (question)
   (let ((correct (opentdb--extract-b64-val 'correct_answer question))
 	(incorrect (opentdb--vector->list
@@ -134,10 +139,14 @@
 	  &key (category opentdb-category)
 	  &key (type opentdb-type)
 	  &key (difficulty opentdb-difficulty))
+  "Fetches questions from the opentdb api and returns (list opentdb-question ...)"
+
 
   (let* ((nil-safe-category (if (null category) "" category))
 	 (nil-safe-difficulty (downcase (if (null difficulty) "" difficulty)))
 	 (nil-safe-type (downcase (if (null type) "" type)))
+
+	 ;; TODO: We should add error handling.
 	 (result (request
 		   opentdb-api-url
 		   :params `(("amount" . ,amount)
@@ -198,8 +207,10 @@
   (widget-create
    'push-button
    :value "Show answer"
-   ;; When pushed, the button will reveal another button for
-   ;; showing another question.
+
+   ;; When pushed, the button will do two things:
+   ;; 1. reveal the answer to the question
+   ;; 2. inserting a button for showing another question.
    :notify (lambda (widget &rest _ignore)
 	      (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question)))
 		;; Since this button is still shown after pressed,
@@ -225,9 +236,11 @@
 (defun opentdb-next-question ()
   "Show a random question in a new buffer."
   (interactive)
+
+  ;; For now we only fetch a single question each time we run this.
   (let* ((question (nth 0 (opentdb-fetch-questions))))
 
-    ;; Clean up potential old buffer
+    ;; Clean up a potentially old buffer
     (kill-buffer (get-buffer-create "*OpenTDB*"))
     (switch-to-buffer "*OpenTDB*")
 
