@@ -2,12 +2,16 @@
 
 (defvar request-url nil)
 (defvar request-params nil)
+(defvar mocked-request-response-status-code 200)
 
 (defun request (url &key params &key sync)
   (progn
     (setq request-url url)
     (setq request-params params)
     'result))
+
+(defun request-response-status-code (result)
+  mocked-request-response-status-code)
 
 (defun request-response-data (result)
 "

@@ -85,3 +85,19 @@
       ;; The correct answer is prefixed with B instead of A since its the second
       ;; answer.
       (should (equal (cons 'B "beets") prefixed-correct))))
+
+(ert-deftest test-raises-error-when-fetching-questions-fail ()
+  ;; assert it worked before trying errors
+  (setq mocked-request-response-status-code 200)
+  (opentdb-fetch-questions)
+
+  ;; nil means we couldnt even contact the web server
+  (setq mocked-request-response-status-code nil)
+  (should-error (opentdb-fetch-questions))
+
+  (setq mocked-request-response-status-code 404)
+  (should-error (opentdb-fetch-questions))
+
+  ;; assert it works again
+  (setq mocked-request-response-status-code 200)
+  (opentdb-fetch-questions))

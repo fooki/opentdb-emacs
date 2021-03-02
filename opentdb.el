@@ -155,7 +155,10 @@
 			     ("type" . ,nil-safe-type)
 			     ("encode" . "base64"))
 		   :sync t)))
-    (opentdb--json-to-opentdb-questions (request-response-data result))))
+    (if (eq 200 (request-response-status-code result))
+	(opentdb--json-to-opentdb-questions (request-response-data result))
+      (error "Could not fetch questions successfully from the opentdb api"))))
+
 
 (defconst opentdb--answer-letter-index
   ;; Here we assume that no questions have more than 26 choices. If that is
