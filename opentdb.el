@@ -21,11 +21,11 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commands:
-;; opentdb-next-question Opens up a new buffer with a quiz.
+;; opentdb-next-question - Opens up a new buffer and runs a quiz.
 
 ;;; Commentary:
 
-;; Build and run quizzes with the help of opentdb.  You can either build your own
+;; Build and run quizzes with the help of opentdb. You can either build your own
 ;; quizes using (opentdb-fetch-questions) or use the provided GUI with
 ;; (opentdb-next-question)
 
