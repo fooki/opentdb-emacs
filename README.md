@@ -67,3 +67,9 @@ Options (note that this might be outdated, check the api):
 - "30" - "Science: Gadgets"
 - "31" - "Entertainment: Japanese Anime & Manga"
 - "32" - "Entertainment: Cartoon & Animations"
+
+## TODO
+- Make the answers clickable, to reveal the correct answer
+- Add custom face (colors/font styling) to the correct answer when revealed, so it pops out more.
+- Fetch multiple questions and cache them, instead of fetching one question at a time.
+- Add a way to provide and store a session token to avoid the same questions.
