@@ -1,29 +1,57 @@
-(provide 'opentdb)
+;;; opentdb.el --- A package for using the opentdb api. -*- lexical-binding: t -*-
+
+;; Copyright (C) 2021 Karl Johansson
+
+;; Author: Karl Johansson <karljoh85@gmail.com>
+;; URL: https://github.com/fooki/opentdb-emacs
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "24.3") (request "0.3.2"))
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commands:
+;; opentdb-next-question Opens up a new buffer with a quiz.
+
+;;; Commentary:
+
+;; Build and run quizzes with the help of opentdb.  You can either build your own
+;; quizes using (opentdb-fetch-questions) or use the provided GUI with
+;; (opentdb-next-question)
+
+;;; Code:
 
 (require 'cl-lib)
 (require 'request)
 (require 'json)
 (require 'widget)
 
-(eval-when-compile
-  (require 'wid-edit))
-
 (defgroup opentdb nil
   "Emacs quiz based on the opentdb api"
   :group 'games)
 
 (defcustom opentdb-category nil
-  "nil for any category, otherwise number 9 - 32. See opentdb-categories"
+  "Nil for any category, otherwise number 9 - 32. See `opentdb-categories'."
   :group 'opentdb
   :type 'string)
 
 (defcustom opentdb-difficulty nil
-  "nil for any difficulty, otherwise easy, medium or hard"
+  "Nil for any difficulty, otherwise easy, medium or hard."
   :group 'opentdb
   :type 'string)
 
 (defcustom opentdb-type nil
-  "nil for any type, otherwise boolean or multiple"
+  "Nil for any type, otherwise boolean or multiple."
   :group 'opentdb
   :type 'string)
 
@@ -103,9 +131,9 @@
 
 (cl-defun opentdb-fetch-questions
     (&key (amount 1)
-     &key (category opentdb-category)
-     &key (type opentdb-type)
-     &key (difficulty opentdb-difficulty))
+	  &key (category opentdb-category)
+	  &key (type opentdb-type)
+	  &key (difficulty opentdb-difficulty))
 
   (let* ((nil-safe-category (if (null category) "" category))
 	 (nil-safe-difficulty (downcase (if (null difficulty) "" difficulty)))
@@ -167,35 +195,35 @@
   (widget-insert "\n\n"))
 
 (cl-defun opentdb--show-answer-button (question)
-  (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question )))
-    ;; Unclear why this is needed, seems like a javascript this/that.
-    (setq opentdb--prefixed-correct-answer prefixed-correct-answer)
-    (widget-create 'push-button
-		   ;; When pushed, the button will reveal another button for
-		   ;; showing another question.
-		   :notify '(lambda (widget &rest ignore)
-			      ;; Since this button is still shown after pressed,
-			      ;; we should only react on the first button press.
-			      (when (not opentdb--correct-answer-shown)
-				(progn
-				  (widget-value-set
-				   widget
-				   (format "Correct answer: %s - %s"
-					   (car opentdb--prefixed-correct-answer)
-					   (cdr opentdb--prefixed-correct-answer)))
-				  (end-of-buffer)
-				  (widget-insert "\n\n")
-				  (opentdb--next-question-button)
+  (widget-create
+   'push-button
+   :value "Show answer"
+   ;; When pushed, the button will reveal another button for
+   ;; showing another question.
+   :notify (lambda (widget &rest _ignore)
+	      (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question)))
+		;; Since this button is still shown after pressed,
+		;; we should only react on the first button press.
+		(when (not opentdb--correct-answer-shown)
+		  (progn
+		    (widget-value-set
+		     widget
+		     (format "Correct answer: %s - %s"
+			     (car prefixed-correct-answer)
+			     (cdr prefixed-correct-answer)))
+		    (goto-char (point-max))
+		    (widget-insert "\n\n")
+		    (opentdb--next-question-button)
 
-				  ;; A hack to keep track of whether we have
-				  ;; clicked the show answer button already.
-				  (setq opentdb--correct-answer-shown t)
+		    ;; A hack to keep track of whether we have
+		    ;; clicked the show answer button already.
+		    (setq opentdb--correct-answer-shown t)
 
-				  (widget-setup))))
-		   :value "Show answer")))
+		    (widget-setup)))))))
+
 
 (defun opentdb-next-question ()
-  "Shows a random question in a new buffer"
+  "Show a random question in a new buffer."
   (interactive)
   (let* ((question (nth 0 (opentdb-fetch-questions))))
 
@@ -215,3 +243,6 @@
 
     (use-local-map widget-keymap)
     (widget-setup)))
+
+(provide 'opentdb)
+;;; opentdb.el ends here
