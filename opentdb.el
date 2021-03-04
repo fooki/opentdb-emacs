@@ -171,10 +171,11 @@ being provided as arguments."
 
 
 (defconst opentdb--answer-letter-index
-"Return all symbols used for prefixing question answers."
   ;; Here we assume that no questions have more than 26 choices. If that is
   ;; incorrect then I owe you a beer.
-  '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z))
+  '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z)
+  "Return all symbols used for prefixing question answers."
+  )
 
 (cl-defun opentdb--prefix-answers (question)
 "Return a list of all answers for the provied QUESTION.
