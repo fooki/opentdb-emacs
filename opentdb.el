@@ -25,7 +25,7 @@
 
 ;;; Commentary:
 
-;; Build and run quizzes with the help of opentdb. You can either build your own
+;; Build and run quizzes with the help of opentdb.  You can either build your own
 ;; quizes using (opentdb-fetch-questions) or use the provided GUI with
 ;; (opentdb-next-question)
 
@@ -101,7 +101,7 @@
   (cl-loop
    for i from (length sequence) downto 2
    do (cl-rotatef (elt sequence (random i))
-		  (elt sequence (1- i))))
+                  (elt sequence (1- i))))
   sequence)
 
 (cl-defun opentdb--vector->list (vec)
@@ -114,10 +114,10 @@
 ;; ((string . base64-string) ...) -> opentdb-question)
 (cl-defun opentdb--assoc-question->opentdb-question (question)
   (let ((correct (opentdb--extract-b64-val 'correct_answer question))
-	(incorrect (opentdb--vector->list
-		    (cl-map 'list
-			    #'base64-decode-string
-			    (cdr (cl-assoc 'incorrect_answers question))))))
+        (incorrect (opentdb--vector->list
+                    (cl-map 'list
+                            #'base64-decode-string
+                            (cdr (cl-assoc 'incorrect_answers question))))))
     (make-opentdb-question
      :question (opentdb--extract-b64-val 'question question)
      :category (opentdb--extract-b64-val 'category question)
@@ -128,7 +128,7 @@
 
 (cl-defun opentdb--json-to-opentdb-questions (json-string)
   (let* ((parsed (json-read-from-string json-string))
-	 (questions (append (cdr (nth 1 parsed)) nil)))
+         (questions (append (cdr (nth 1 parsed)) nil)))
     (cl-loop
      for question in questions
      collect (opentdb--assoc-question->opentdb-question question))))
@@ -136,27 +136,26 @@
 
 (cl-defun opentdb-fetch-questions
     (&key (amount 1)
-	  &key (category opentdb-category)
-	  &key (type opentdb-type)
-	  &key (difficulty opentdb-difficulty))
+          &key (category opentdb-category)
+          &key (type opentdb-type)
+          &key (difficulty opentdb-difficulty))
   "Fetches questions from the opentdb api and returns (list opentdb-question ...)"
 
 
   (let* ((nil-safe-category (if (null category) "" category))
-	 (nil-safe-difficulty (downcase (if (null difficulty) "" difficulty)))
-	 (nil-safe-type (downcase (if (null type) "" type)))
+         (nil-safe-difficulty (downcase (if (null difficulty) "" difficulty)))
+         (nil-safe-type (downcase (if (null type) "" type)))
 
-	 ;; TODO: We should add error handling.
-	 (result (request
-		   opentdb-api-url
-		   :params `(("amount" . ,amount)
-			     ("category" . ,nil-safe-category)
-			     ("difficulty" . ,nil-safe-difficulty)
-			     ("type" . ,nil-safe-type)
-			     ("encode" . "base64"))
-		   :sync t)))
+         (result (request
+                   opentdb-api-url
+                   :params `(("amount" . ,amount)
+                             ("category" . ,nil-safe-category)
+                             ("difficulty" . ,nil-safe-difficulty)
+                             ("type" . ,nil-safe-type)
+                             ("encode" . "base64"))
+                   :sync t)))
     (if (eq 200 (request-response-status-code result))
-	(opentdb--json-to-opentdb-questions (request-response-data result))
+        (opentdb--json-to-opentdb-questions (request-response-data result))
       (error "Could not fetch questions successfully from the opentdb api"))))
 
 
@@ -169,23 +168,23 @@
   ;; Prefixes all answers with a letter to make it easier to refer to
   ;; them. Example "I think answer B is correct!".
   (cl-mapcar #'cons
-	     opentdb--answer-letter-index
-	     (opentdb-question-answers question)))
+             opentdb--answer-letter-index
+             (opentdb-question-answers question)))
 
 (cl-defun opentdb--prefix-correct-answer (question)
   ;; Prefixes the correct answer with a letter, giving it the same letter as it
   ;; has in the list of all answers.
   (let* ((correct-answer (opentdb-question-correct-answer question))
-	 (answers (opentdb-question-answers question))
-  	 (correct-pos (cl-position correct-answer answers :test 'equal))
-  	 (prefix (nth correct-pos opentdb--answer-letter-index)))
+         (answers (opentdb-question-answers question))
+         (correct-pos (cl-position correct-answer answers :test #'equal))
+         (prefix (nth correct-pos opentdb--answer-letter-index)))
     (cons prefix correct-answer)))
 
 (cl-defun opentdb--next-question-button ()
   ;; Inserts a button widget at current point for starting over the quiz.
   (widget-create
    'push-button
-   :notify '(lambda (&rest ignore) (opentdb-next-question))
+   :notify (lambda (&rest ignore) (opentdb-next-question))
    "Next question"))
 
 (cl-defun opentdb--prefixed-answer-list (question)
@@ -196,8 +195,8 @@
      'list
      (lambda (el)
        (progn
-	 (widget-insert (format "%s - %s" (car el) (cdr el)))
-	 (widget-insert "\n\n")))
+         (widget-insert (format "%s - %s" (car el) (cdr el)))
+         (widget-insert "\n\n")))
      prefixed-answers)))
 
 (cl-defun opentdb--question-banner (question)
@@ -215,25 +214,24 @@
    ;; 1. reveal the answer to the question
    ;; 2. inserting a button for showing another question.
    :notify (lambda (widget &rest _ignore)
-	      (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question)))
-		;; Since this button is still shown after pressed,
-		;; we should only react on the first button press.
-		(when (not opentdb--correct-answer-shown)
-		  (progn
-		    (widget-value-set
-		     widget
-		     (format "Correct answer: %s - %s"
-			     (car prefixed-correct-answer)
-			     (cdr prefixed-correct-answer)))
-		    (goto-char (point-max))
-		    (widget-insert "\n\n")
-		    (opentdb--next-question-button)
+             (let ((prefixed-correct-answer (opentdb--prefix-correct-answer question)))
+               ;; Since this button is still shown after pressed,
+               ;; we should only react on the first button press.
+               (when (not opentdb--correct-answer-shown)
+                 (widget-value-set
+                  widget
+                  (format "Correct answer: %s - %s"
+                          (car prefixed-correct-answer)
+                          (cdr prefixed-correct-answer)))
+                 (goto-char (point-max))
+                 (widget-insert "\n\n")
+                 (opentdb--next-question-button)
 
-		    ;; A hack to keep track of whether we have
-		    ;; clicked the show answer button already.
-		    (setq opentdb--correct-answer-shown t)
+                 ;; A hack to keep track of whether we have
+                 ;; clicked the show answer button already.
+                 (setq opentdb--correct-answer-shown t)
 
-		    (widget-setup)))))))
+                 (widget-setup))))))
 
 
 (defun opentdb-next-question ()
