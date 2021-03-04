@@ -98,6 +98,7 @@
 
 ;; Stolen from rosetta code: Knuth_shuffle
 (cl-defun opentdb--nshuffle (sequence)
+  "Shuffle the contents of the contents of the provided SEQUENCE."
   (cl-loop
    for i from (length sequence) downto 2
    do (cl-rotatef (elt sequence (random i))
@@ -105,14 +106,15 @@
   sequence)
 
 (cl-defun opentdb--vector->list (vec)
+  "Return a new list based on the provided VEC."
   (cl-map 'list #'identity vec))
 
 (cl-defun opentdb--extract-b64-val (key question)
-  ;; decodes a single base64 field in the provided question
+  "Decode a single base64 field chosen by KEY in the provided QUESTION."
   (base64-decode-string (cdr (cl-assoc key question))))
 
-;; ((string . base64-string) ...) -> opentdb-question)
 (cl-defun opentdb--assoc-question->opentdb-question (question)
+  "Create an opentdb-question from the provided alist of encoded fields in QUESTION."
   (let ((correct (opentdb--extract-b64-val 'correct_answer question))
         (incorrect (opentdb--vector->list
                     (cl-map 'list
@@ -127,6 +129,7 @@
      :answers (opentdb--nshuffle (append incorrect (list correct))))))
 
 (cl-defun opentdb--json-to-opentdb-questions (json-string)
+  "Return a list of opentdb-questions from the provided JSON-STRING."
   (let* ((parsed (json-read-from-string json-string))
          (questions (append (cdr (nth 1 parsed)) nil)))
     (cl-loop
@@ -139,7 +142,15 @@
           &key (category opentdb-category)
           &key (type opentdb-type)
           &key (difficulty opentdb-difficulty))
-  "Fetches questions from the opentdb api and returns (list opentdb-question ...)"
+  "Fetch questions from the opentdb api and return opentdb-questions.
+Optional params:
+AMOUNT - Decides how many questions will be fetched (up to 50).
+CATEGORY - Which category is to be used (nil for all) see `opentdb-categories`.
+TYPE - decides if the question is boolean or multiple (answers).
+DIFFICULTY - easy, medium or hard.
+
+All params can be set using their custom variables instead of
+being provided as arguments."
 
 
   (let* ((nil-safe-category (if (null category) "" category))
@@ -160,18 +171,23 @@
 
 
 (defconst opentdb--answer-letter-index
+"Return all symbols used for prefixing question answers."
   ;; Here we assume that no questions have more than 26 choices. If that is
   ;; incorrect then I owe you a beer.
   '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z))
 
 (cl-defun opentdb--prefix-answers (question)
-  ;; Prefixes all answers with a letter to make it easier to refer to
-  ;; them. Example "I think answer B is correct!".
+"Return a list of all answers for the provied QUESTION.
+The answers are all prefixed with unique letters to make it
+easier to refer to them.  Example: 'I think answer B is correct!'."
   (cl-mapcar #'cons
              opentdb--answer-letter-index
              (opentdb-question-answers question)))
 
 (cl-defun opentdb--prefix-correct-answer (question)
+"Return a prefixed correct answer to the provided QUESTION.
+The prefix will match the prefix the correct answer has in the
+list of all answers."
   ;; Prefixes the correct answer with a letter, giving it the same letter as it
   ;; has in the list of all answers.
   (let* ((correct-answer (opentdb-question-correct-answer question))
@@ -181,15 +197,15 @@
     (cons prefix correct-answer)))
 
 (cl-defun opentdb--next-question-button ()
-  ;; Inserts a button widget at current point for starting over the quiz.
+"Insert a button widget at current point for starting over the quiz."
   (widget-create
    'push-button
    :notify (lambda (&rest ignore) (opentdb-next-question))
    "Next question"))
 
 (cl-defun opentdb--prefixed-answer-list (question)
-  ;; Inserts a bunch of widgets at current point containing all the answers for
-  ;; the provided question.
+"Insert a bunch of widgets at current point containing all the answers.
+The answers come from the provided QUESTION."
   (let ((prefixed-answers (opentdb--prefix-answers question)))
     (cl-map
      'list
@@ -200,12 +216,18 @@
      prefixed-answers)))
 
 (cl-defun opentdb--question-banner (question)
+"Insert the question text from the provided QUESTION."
   (widget-insert (format "\n\n### %s ###\n\n" (opentdb-question-question question))))
 
 (cl-defun opentdb--margin-widget ()
+"Insert some read-only newlines at current point."
   (widget-insert "\n\n"))
 
 (cl-defun opentdb--show-answer-button (question)
+"Insert a answer-reveal button at current point.
+QUESTION contains the correct answer.  When pressed, the button
+will show the answer and reveal a new button for showing a new
+question."
   (widget-create
    'push-button
    :value "Show answer"
@@ -235,7 +257,7 @@
 
 
 (defun opentdb-next-question ()
-  "Show a random question in a new buffer."
+"Show a random question in a new buffer."
   (interactive)
 
   ;; For now we only fetch a single question each time we run this.
