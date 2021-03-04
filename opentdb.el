@@ -24,10 +24,9 @@
 ;; opentdb-next-question - Opens up a new buffer and runs a quiz.
 
 ;;; Commentary:
-
-;; Build and run quizzes with the help of opentdb.  You can either build your own
-;; quizes using (opentdb-fetch-questions) or use the provided GUI with
-;; (opentdb-next-question)
+;; Run quizzes with the help of the opentdb API.
+;; You can either build your own quizes using (opentdb-fetch-questions) or use
+;; the provided GUI with (opentdb-next-question)
 
 ;;; Code:
 
@@ -143,6 +142,7 @@
           &key (type opentdb-type)
           &key (difficulty opentdb-difficulty))
   "Fetch questions from the opentdb api and return opentdb-questions.
+
 Optional params:
 AMOUNT - Decides how many questions will be fetched (up to 50).
 CATEGORY - Which category is to be used (nil for all) see `opentdb-categories`.
@@ -174,8 +174,7 @@ being provided as arguments."
   ;; Here we assume that no questions have more than 26 choices. If that is
   ;; incorrect then I owe you a beer.
   '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z)
-  "Return all symbols used for prefixing question answers."
-  )
+  "Return all symbols used for prefixing question answers.")
 
 (cl-defun opentdb--prefix-answers (question)
 "Return a list of all answers for the provied QUESTION.
@@ -201,7 +200,7 @@ list of all answers."
 "Insert a button widget at current point for starting over the quiz."
   (widget-create
    'push-button
-   :notify (lambda (&rest ignore) (opentdb-next-question))
+   :notify (lambda (&rest _ignore) (opentdb-next-question))
    "Next question"))
 
 (cl-defun opentdb--prefixed-answer-list (question)
